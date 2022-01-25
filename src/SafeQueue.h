@@ -6,6 +6,20 @@
 #include <queue>
 
 
+class non_empty_queue : public std::exception {
+public:
+	explicit non_empty_queue(std::string pMsg) {
+		mWhat = std::move(pMsg);
+	}
+	const char* what() const noexcept override {
+		return mWhat.c_str();
+	}
+
+private:
+	std::string mWhat;
+};
+
+
 template <typename T>
 class SafeQueue {
 public:
@@ -14,46 +28,44 @@ public:
 	SafeQueue& operator=(const SafeQueue<T>&) = delete;
 
 	SafeQueue(const SafeQueue<T>&& other) {
-		std::lock_guard<std::mutex> lock(mtx);
-		que = std::move(other.que);
+		std::lock_guard<std::mutex> lock(mMtx);
+		if (!mQue.empty()) {
+			throw non_empty_queue{ "Moving into a non-empty queue" };
+		}
+		mQue = std::move(other.mQue);
 	}
 
-	virtual ~SafeQueue() {}
+	virtual ~SafeQueue() {
+		std::lock_guard<std::mutex> lock(mMtx);
+		if (!mQue.empty()) {
+			throw non_empty_queue{ "Destroying a non-empty queue" };
+		}
+	}
 
-	void push(const T&);
-	std::optional<T> pop();
-	long size();
+	void push(const T& t) {
+		std::lock_guard<std::mutex> lock(mMtx);
+		mQue.push(t);
+	}
+
+	std::optional<T> pop() {
+		std::lock_guard<std::mutex> lock(mMtx);
+		if (mQue.empty()) {
+			return {};
+		}
+		T front = mQue.front();
+		mQue.pop();
+		return front;
+	}
+
+	long size() const {
+		std::lock_guard<std::mutex> lock(mMtx);
+		return mQue.size();
+	}
 
 private:
-	std::queue<T> que;
-	std::mutex mtx;
+	std::queue<T> mQue;
+	mutable std::mutex mMtx;
 };
 
-
-template <typename T>
-void SafeQueue<T>::push(const T& t)
-{
-	std::lock_guard<std::mutex> lock(mtx);
-	que.push(t);
-}
-
-template <typename T>
-std::optional<T> SafeQueue<T>::pop()
-{
-	std::lock_guard<std::mutex> lock(mtx);
-	if (que.empty()) {
-		return {};
-	}
-	T front = que.front();
-	que.pop();
-	return front;
-}
-
-template <typename T>
-long SafeQueue<T>::size()
-{
-	std::lock_guard<std::mutex> lock(mtx);
-	return que.size();
-}
 
 #endif

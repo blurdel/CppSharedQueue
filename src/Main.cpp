@@ -1,9 +1,5 @@
 #include <iostream>
-#include <future>
-#include <mutex>
-#include <queue>
 #include <thread>
-#include <vector>
 #include "SafeQueue.h"
 
 // https://medium.com/swlh/c-mutex-write-your-first-concurrent-code-69ac8b332288
@@ -38,5 +34,6 @@ int main()
 	tEx.join();
 	tFx.join();
 
+	std::cout << "Done." << std::endl;
 	return 0;
 }
