@@ -21,6 +21,8 @@ int main()
 	tE.join();
 	tF.join();
 
+//	std::cout << "q: " << sque << std::endl;
+
 	std::thread tAx(&SafeQueue<int>::pop, std::ref(sque));
 	std::thread tBx(&SafeQueue<int>::pop, std::ref(sque));
 	std::thread tCx(&SafeQueue<int>::pop, std::ref(sque));

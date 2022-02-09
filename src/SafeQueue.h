@@ -36,10 +36,10 @@ public:
 	}
 
 	virtual ~SafeQueue() {
-		std::lock_guard<std::mutex> lock(mMtx);
-		if (!mQue.empty()) {
-			throw non_empty_queue{ "Destroying a non-empty queue" };
-		}
+//		std::lock_guard<std::mutex> lock(mMtx);
+//		if (!mQue.empty()) {
+//			throw non_empty_queue{ "Destroying a non-empty queue" };
+//		}
 	}
 
 	void push(const T& t) {
@@ -60,6 +60,14 @@ public:
 	long size() const {
 		std::lock_guard<std::mutex> lock(mMtx);
 		return mQue.size();
+	}
+
+	std::ostream& operator<< (std::ostream& o /*, const SafeQueue& q*/) {
+		o << "[";
+		o << "size=" << mQue.size();
+		o << ", empty=" << mQue.empty();
+		o << "]";
+		return o;
 	}
 
 private:
